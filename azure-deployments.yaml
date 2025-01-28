@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-back
+  namespace: azure-vote
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: azure-back
+  template:
+    metadata:
+      labels:
+        app: azure-back
+    spec:
+      containers:
+        - name: redis
+          image: redis:6.0.8
+          ports:
+            - containerPort: 6379
+            
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  namespace: azure-vote
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+    spec:
+      containers:
+        - name: wordpress
+          image: wordpress:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: redis
+              value: azure-back

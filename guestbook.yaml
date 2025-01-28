@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: guestbook
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-master
+  namespace: guestbook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+    spec:
+      containers:
+        - name: redis
+          image: redis:6.0.8
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: guestbook
+spec:
+  ports:
+    - port: 6379
+  selector:
+    app: redis
+    role: master
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-slave
+  namespace: guestbook
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: redis
+      role: slave
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: slave
+    spec:
+      containers:
+        - name: redis
+          image: sarath7112/redis-slave
+          ports:
+            - containerPort: 6379
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-slave
+  namespace: guestbook
+spec:
+  ports:
+    - port: 6379
+  selector:
+    app: redis
+    role: slave
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook
+  namespace: guestbook
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: guestbook
+  template:
+    metadata:
+      labels:
+        app: guestbook
+    spec:
+      containers:
+        - name: guestbook
+          image: kubeguide/guestbook-php-frontend
+          ports:
+            - containerPort: 80
+          env:
+            - name: REDIS_MASTER_SERVICE_HOST
+              value: redis-master
+            - name: REDIS_SLAVE_SERVICE_HOST
+              value: redis-slave
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guestbook
+  namespace: guestbook
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+  selector:
+    app: guestbook

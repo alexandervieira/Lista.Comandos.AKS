@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-back
+  namespace: azure-vote
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: azure-back
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-front
+  namespace: azure-vote
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: azure-front
